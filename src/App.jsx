@@ -35,8 +35,9 @@ const GLOBAL_STYLES = `
   .spinning { animation:spin 0.7s linear infinite; display:inline-block; }
   .timestamp-flash { animation:flashUpdate 0.6s ease; }
   .heart-pop { animation:heartPop 0.3s ease; }
-  .detail-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.78); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn 0.2s ease; }
-  .detail-panel { background:#0f1420; border:1px solid #1e2535; border-radius:20px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; padding:28px; display:flex; flex-direction:column; gap:20px; animation:fadeUp 0.25s ease both; }
+  .detail-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.78); display:flex; align-items:flex-start; justify-content:center; padding:20px; animation:fadeIn 0.2s ease; overflow-y:auto; }
+  .detail-panel { background:#0f1420; border:1px solid #1e2535; border-radius:20px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; padding:28px; display:flex; flex-direction:column; gap:20px; animation:fadeUp 0.25s ease both; margin:auto 0; }
+  .score-row { flex-shrink:0; overflow:visible; }
   .tabs-wrap { display:flex; gap:2px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:2px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
   .tabs-wrap::-webkit-scrollbar { display:none; }
   .day-tabs { display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; flex-wrap:nowrap; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
@@ -461,33 +462,55 @@ function GameDetail({ game, sport, onClose, favorites, onToggleFav, reminders, o
         </div>
 
         {/* Score block */}
-        <div style={{ background:"#141820",borderRadius:16,padding:"18px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,border:statusInfo.live?"1px solid rgba(255,59,59,0.3)":"1px solid transparent",position:"relative",overflow:"hidden" }}>
-          {statusInfo.live&&<div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#ff3b3b,#ff6b6b,#ff3b3b)",backgroundSize:"200% 100%",animation:"shimmer 2s linear infinite" }} />}
-          <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:4 }}>
-            <TeamBlock competitor={away} showScore={statusInfo.live||statusInfo.final} />
+        <div className="score-row" style={{ background:"#141820",borderRadius:16,padding:"18px 14px",display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,border:statusInfo.live?"1px solid rgba(255,59,59,0.3)":"1px solid transparent",position:"relative" }}>
+          {statusInfo.live&&<div style={{ position:"absolute",top:0,left:0,right:0,height:2,borderRadius:"16px 16px 0 0",overflow:"hidden",background:"linear-gradient(90deg,#ff3b3b,#ff6b6b,#ff3b3b)",backgroundSize:"200% 100%",animation:"shimmer 2s linear infinite" }} />}
+
+          {/* Away team — logo + name stacked vertically */}
+          <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:6,flex:1,minWidth:0 }}>
+            {away?.team?.logo
+              ? <img src={away.team.logo} alt="" style={{ width:36,height:36,objectFit:"contain" }} onError={e=>e.target.style.display="none"} />
+              : <div style={{ width:36,height:36,borderRadius:"50%",background:"#1e2535",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#8898aa" }}>{(away?.team?.abbreviation||"?").slice(0,3)}</div>
+            }
+            <div style={{ fontSize:12,fontWeight:away?.winner?700:400,color:away?.winner?"#f0f0f0":"#8898aa",textAlign:"center",lineHeight:1.3,wordBreak:"break-word" }}>
+              {away?.team?.shortDisplayName||away?.team?.displayName||"TBD"}
+            </div>
+            {(statusInfo.live||statusInfo.final)&&
+              <div style={{ fontSize:22,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",lineHeight:1,color:away?.score!==undefined?(away?.winner?"#f0f0f0":"#555e70"):"#3a4255" }}>{away?.score??"–"}</div>
+            }
             {awayId&&<HeartButton teamId={awayId} teamName={away?.team?.shortDisplayName||""} favorites={favorites} onToggle={onToggleFav} />}
           </div>
-          <div style={{ textAlign:"center",flexShrink:0 }}>
-            {(statusInfo.live||statusInfo.final)
-              ? <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-                  <span style={{ fontSize:40,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",color:away?.score!==undefined?"#f0f0f0":"#3a4255" }}>{away?.score??"–"}</span>
-                  <span style={{ fontSize:14,color:"#2a3040" }}>-</span>
-                  <span style={{ fontSize:40,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",color:home?.score!==undefined?"#f0f0f0":"#3a4255" }}>{home?.score??"–"}</span>
-                </div>
-              : <div style={{ fontSize:13,color:"#8898aa",fontWeight:600 }}>{formatTime(game.date)}</div>
-            }
-            <div style={{ display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.5px",color:statusInfo.live?"#ff6b6b":"#5a6478",marginTop:4 }}>
+
+          {/* Center — time/status */}
+          <div style={{ textAlign:"center",flexShrink:0,paddingTop:6 }}>
+            {!(statusInfo.live||statusInfo.final)&&<div style={{ fontSize:13,color:"#8898aa",fontWeight:600 }}>{formatTime(game.date)}</div>}
+            {(statusInfo.live||statusInfo.final)&&<div style={{ fontSize:13,color:"#2a3040",fontWeight:700 }}>vs</div>}
+            <div style={{ display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.5px",color:statusInfo.live?"#ff6b6b":"#5a6478",marginTop:4,whiteSpace:"nowrap" }}>
               {statusInfo.live&&<LiveDot />}{statusInfo.live?period:statusInfo.label}
             </div>
             {!statusInfo.live&&!statusInfo.final&&
-              <div style={{ fontSize:10,color:"#3a4255",marginTop:4 }}>All times in your local timezone</div>
+              <div style={{ fontSize:9,color:"#3a4255",marginTop:4,maxWidth:70 }}>Local time</div>
             }
           </div>
-          <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:4 }}>
-            <TeamBlock competitor={home} showScore={statusInfo.live||statusInfo.final} reverse />
+
+          {/* Home team — logo + name stacked vertically */}
+          <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:6,flex:1,minWidth:0 }}>
+            {home?.team?.logo
+              ? <img src={home.team.logo} alt="" style={{ width:36,height:36,objectFit:"contain" }} onError={e=>e.target.style.display="none"} />
+              : <div style={{ width:36,height:36,borderRadius:"50%",background:"#1e2535",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#8898aa" }}>{(home?.team?.abbreviation||"?").slice(0,3)}</div>
+            }
+            <div style={{ fontSize:12,fontWeight:home?.winner?700:400,color:home?.winner?"#f0f0f0":"#8898aa",textAlign:"center",lineHeight:1.3,wordBreak:"break-word" }}>
+              {home?.team?.shortDisplayName||home?.team?.displayName||"TBD"}
+            </div>
+            {(statusInfo.live||statusInfo.final)&&
+              <div style={{ fontSize:22,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",lineHeight:1,color:home?.score!==undefined?(home?.winner?"#f0f0f0":"#555e70"):"#3a4255" }}>{home?.score??"–"}</div>
+            }
             {homeId&&<HeartButton teamId={homeId} teamName={home?.team?.shortDisplayName||""} favorites={favorites} onToggle={onToggleFav} />}
           </div>
         </div>
+
+        {!statusInfo.live&&!statusInfo.final&&
+          <div style={{ fontSize:11,color:"#3a4255",textAlign:"center",marginTop:-12 }}>All times in your local timezone</div>
+        }
 
         {/* Goalscorers — soccer only */}
         {hasGoalData&&(
