@@ -123,6 +123,8 @@ const BROADCASTER_MAP = {
   "NBA TV":            { url:"https://www.nba.com/watch",                 bg:"#C9082A", text:"#fff", type:"Cable/Stream", streamVia:["Fubo","Sling"] },
   "CBS Sports Network":{ url:"https://www.cbssports.com/live/",           bg:"#003DA5", text:"#fff", type:"Cable",        streamVia:["Fubo","Sling"] },
   "beIN SPORTS":       { url:"https://www.beinsports.com/us/",            bg:"#8B0000", text:"#fff", type:"Cable/Stream", streamVia:["Fubo","Sling"] },
+  "FOX One":           { url:"https://www.fox.com/foxone/",                bg:"#003366", text:"#fff", type:"Streaming",    streamVia:[] },
+  "Telemundo":         { url:"https://www.telemundo.com/en-vivo",          bg:"#C8102E", text:"#fff", type:"Free TV",      streamVia:["Peacock"] },
 };
 
 const BROADCASTER_ALIASES = {
@@ -132,6 +134,9 @@ const BROADCASTER_ALIASES = {
   "NBATV":"NBA TV","CBSSN":"CBS Sports Network",
   "Paramount Plus":"Paramount+","Apple TV Plus":"Apple TV+",
   "Prime":"Prime Video","Amazon":"Prime Video","UNIVERSO":"Universo",
+  "NBCSN":"Peacock","NBC Sports":"Peacock","NBC Sports Network":"Peacock",
+  "Tele":"Telemundo","TELEMUNDO":"Telemundo","Telemundo Deportes":"Telemundo",
+  "FOXOne":"FOX One","Fox One":"FOX One","FOX1":"FOX One",
 };
 
 const LEAGUE_FALLBACK = {
@@ -271,9 +276,12 @@ function BroadcasterPill({ name, small }) {
   return <span style={{ background:info.bg,color:info.text,fontSize:small?"10px":"11px",fontWeight:700,padding:small?"2px 7px":"3px 9px",borderRadius:4,letterSpacing:"0.4px",whiteSpace:"nowrap",fontFamily:"'DM Sans',sans-serif" }}>{name}</span>;
 }
 
-function TeamBlock({ competitor, showScore, reverse }) {
+function TeamBlock({ competitor, showScore, reverse, compact }) {
   const team=competitor?.team||{};
   const winner=competitor?.winner;
+  const fullName = team.shortDisplayName||team.displayName||"TBD";
+  // Only abbreviate in compact card view, and only for genuinely long names
+  const displayName = (compact && team.abbreviation && fullName.length>13) ? team.abbreviation : fullName;
   return (
     <div style={{ display:"flex",flexDirection:reverse?"row-reverse":"row",alignItems:"center",gap:10,flex:1,minWidth:0 }}>
       {team.logo
@@ -282,7 +290,7 @@ function TeamBlock({ competitor, showScore, reverse }) {
       }
       <div style={{ minWidth:0,textAlign:reverse?"right":"left" }}>
         <div style={{ fontSize:13,fontWeight:winner?700:400,color:winner?"#f0f0f0":"#8898aa",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
-          {team.abbreviation&&team.shortDisplayName&&team.shortDisplayName.length>10?team.abbreviation:(team.shortDisplayName||team.displayName||"TBD")}
+          {displayName}
         </div>
         {showScore&&(
           <div style={{ fontSize:22,fontWeight:800,lineHeight:1.1,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"1px",
@@ -379,9 +387,9 @@ function GameCard({ game, sport, onClick, favorites, onToggleFav, reminders, onS
       </div>
 
       <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-        <TeamBlock competitor={away} showScore={isLive||statusInfo.final} />
+        <TeamBlock competitor={away} showScore={isLive||statusInfo.final} compact />
         <span style={{ fontSize:11,color:"#2a3040",fontWeight:700,flexShrink:0 }}>VS</span>
-        <TeamBlock competitor={home} showScore={isLive||statusInfo.final} reverse />
+        <TeamBlock competitor={home} showScore={isLive||statusInfo.final} reverse compact />
       </div>
 
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px solid #141820" }}>
