@@ -62,6 +62,7 @@ const GLOBAL_STYLES = `
     .search-desktop-only { display:none!important; }
     .brand-logo { width:32px!important; height:32px!important; font-size:16px!important; }
     .brand-name { font-size:21px!important; letter-spacing:1.5px!important; }
+    .wc-banner-title { font-size:13px!important; }
   }
 `;
 
@@ -853,6 +854,18 @@ export default function SportZone() {
     return ()=>clearInterval(timerRef.current);
   },[activeSport]);
 
+  // While a game detail panel is open, refresh live data faster (every 15s)
+  // so the score/status the user is actively looking at never goes stale.
+  const panelTimerRef = useRef(null);
+  useEffect(()=>{
+    if (panelTimerRef.current) clearInterval(panelTimerRef.current);
+    if (selectedGame) {
+      fetchLiveAll(false); // immediate refresh the moment a panel opens
+      panelTimerRef.current = setInterval(()=>{ fetchLiveAll(false); }, 15000);
+    }
+    return ()=>{ if (panelTimerRef.current) clearInterval(panelTimerRef.current); };
+  },[selectedGame?.id]);
+
   const handleRefresh=()=>{ fetchLiveAll(false); if(activeSport!==ALL_SPORTS_ID){const s=SPORTS.find(s=>s.id===activeSport);if(s)fetchAllDays(s,false);} };
   const openGame=(game,sport)=>{ setSelectedGame(game); setSelectedSport(sport||SPORTS.find(s=>s.id===activeSport)); };
   const handleAllSportsGameClick=(game,sport,switchTab)=>{ if(switchTab){setActiveSport(sport.id);setActiveDay("today");}else{openGame(game,sport);} };
@@ -990,29 +1003,28 @@ export default function SportZone() {
 
       {/* World Cup Banner */}
       <div style={{ maxWidth:1100,margin:"0 auto",padding:"16px 20px 0" }}>
-        <div onClick={()=>{ setActiveSport("worldcup"); setActiveDay("today"); }}
+        <div className="wc-banner" onClick={()=>{ setActiveSport("worldcup"); setActiveDay("today"); }}
           style={{
             background:"linear-gradient(120deg,#1a2f5c 0%,#0f1f42 50%,#2a1a4c 100%)",
             border:"1px solid rgba(99,179,237,0.35)",
-            borderRadius:16, padding:"16px 20px",
+            borderRadius:14, padding:"12px 16px",
             display:"flex", alignItems:"center", justifyContent:"space-between",
-            gap:14, cursor:"pointer", position:"relative", overflow:"hidden",
+            gap:12, cursor:"pointer", position:"relative", overflow:"hidden",
             animation:"heroFade 0.5s ease both",
           }}
           onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(99,179,237,0.6)";}}
           onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(99,179,237,0.35)";}}>
           <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#63b3ed,#a78bfa,#63b3ed)",backgroundSize:"200% 100%",animation:"shimmer 3s linear infinite" }} />
-          <div style={{ display:"flex",alignItems:"center",gap:14,minWidth:0 }}>
-            <span style={{ fontSize:32,flexShrink:0 }}>🏆</span>
-            <div style={{ minWidth:0 }}>
-              <div style={{ fontSize:11,fontWeight:700,color:"#a78bfa",letterSpacing:"1.5px",textTransform:"uppercase",marginBottom:2 }}>Happening Now</div>
-              <div style={{ fontSize:18,fontWeight:800,color:"#f0f0f0",fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"1px" }}>FIFA World Cup 2026</div>
-              <div style={{ fontSize:12,color:"#8898aa",marginTop:2 }}>The world's biggest tournament — every match, every channel</div>
+          <div style={{ display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1 }}>
+            <span style={{ fontSize:24,flexShrink:0 }}>🏆</span>
+            <div style={{ minWidth:0,display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap" }}>
+              <span style={{ fontSize:10,fontWeight:700,color:"#a78bfa",letterSpacing:"1.2px",textTransform:"uppercase",whiteSpace:"nowrap" }}>Happening Now</span>
+              <span className="wc-banner-title" style={{ fontSize:15,fontWeight:800,color:"#f0f0f0",fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.5px",whiteSpace:"nowrap" }}>FIFA World Cup 2026</span>
             </div>
           </div>
-          <div style={{ display:"flex",alignItems:"center",gap:6,flexShrink:0,color:"#63b3ed",fontSize:13,fontWeight:700,whiteSpace:"nowrap" }}>
+          <div className="wc-banner-cta" style={{ display:"flex",alignItems:"center",gap:5,flexShrink:0,color:"#63b3ed",fontSize:12,fontWeight:700,whiteSpace:"nowrap" }}>
             View Matches
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </div>
         </div>
       </div>
