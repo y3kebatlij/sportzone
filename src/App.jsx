@@ -35,7 +35,7 @@ const GLOBAL_STYLES = `
   .spinning { animation:spin 0.7s linear infinite; display:inline-block; }
   .timestamp-flash { animation:flashUpdate 0.6s ease; }
   .heart-pop { animation:heartPop 0.3s ease; }
-  .detail-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.78); display:flex; align-items:flex-start; justify-content:center; padding:20px; animation:fadeIn 0.2s ease; overflow-y:auto; }
+  .detail-overlay { position:fixed; inset:0; z-index:200; background:rgba(4,6,11,0.92); backdrop-filter:blur(4px); display:flex; align-items:flex-start; justify-content:center; padding:20px; animation:fadeIn 0.2s ease; overflow-y:auto; }
   .detail-panel { background:#0f1420; border:1px solid #1e2535; border-radius:20px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; padding:28px; display:flex; flex-direction:column; gap:20px; animation:fadeUp 0.25s ease both; margin:auto 0; }
   .score-row { flex-shrink:0; overflow:visible; }
   .tabs-wrap { display:flex; gap:2px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:2px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
@@ -49,12 +49,12 @@ const GLOBAL_STYLES = `
   .offline-banner { background:#7c2d12; border-bottom:1px solid #92400e; padding:8px 20px; text-align:center; font-size:13px; font-weight:600; color:#fed7aa; }
   .brand-logo { flex-shrink:0; }
   .brand-name { flex-shrink:0; white-space:nowrap; }
-  @media (max-width:640px) {
+  @media (max-width:768px) {
     .detail-overlay { align-items:flex-end; padding:0; }
     .detail-panel { border-radius:20px 20px 0 0; max-height:92vh; animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1) both; padding:20px 16px; }
-    .hero-headline { font-size:32px!important; letter-spacing:2px!important; margin-bottom:6px!important; }
+    .hero-headline { font-size:30px!important; letter-spacing:1px!important; margin-bottom:6px!important; white-space:nowrap; }
     .hero-tagline  { font-size:12px!important; max-width:100%!important; }
-    .hero-section  { padding:16px 16px 12px!important; }
+    .hero-section  { padding:14px 16px 10px!important; }
     .header-date   { display:none!important; }
     .sport-btn-label { display:none; }
     .sport-btn { padding:6px 10px!important; flex-shrink:0; }
@@ -483,8 +483,8 @@ function GameDetail({ game, sport, onClose, favorites, onToggleFav, reminders, o
           {/* Center — time/status */}
           <div style={{ textAlign:"center",flexShrink:0,paddingTop:6 }}>
             {!(statusInfo.live||statusInfo.final)&&<div style={{ fontSize:13,color:"#8898aa",fontWeight:600 }}>{formatTime(game.date)}</div>}
-            {(statusInfo.live||statusInfo.final)&&<div style={{ fontSize:13,color:"#2a3040",fontWeight:700 }}>vs</div>}
-            <div style={{ display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.5px",color:statusInfo.live?"#ff6b6b":"#5a6478",marginTop:4,whiteSpace:"nowrap" }}>
+            {statusInfo.live&&<div style={{ fontSize:13,color:"#2a3040",fontWeight:700 }}>vs</div>}
+            <div style={{ display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.5px",color:statusInfo.live?"#ff6b6b":"#5a6478",marginTop:statusInfo.final?0:4,whiteSpace:"nowrap" }}>
               {statusInfo.live&&<LiveDot />}{statusInfo.live?period:statusInfo.label}
             </div>
             {!statusInfo.live&&!statusInfo.final&&
@@ -974,8 +974,8 @@ export default function SportZone() {
                 <button key={s.id} className="sport-btn" onClick={()=>{ setActiveSport(s.id); setActiveDay("today"); setSearchQuery(""); }}
                   style={{ background:active?"rgba(99,179,237,0.1)":"none",border:"none",padding:"6px 12px",borderRadius:"8px 8px 0 0",fontSize:13,fontWeight:active?700:500,color:active?"#63b3ed":"#5a6478",whiteSpace:"nowrap",borderBottom:active?"2px solid #63b3ed":"2px solid transparent",fontFamily:"'DM Sans',sans-serif",position:"relative",flexShrink:0,display:"flex",alignItems:"center",gap:7 }}>
                   {s.logo
-                    ? <span style={{ width:20,height:20,borderRadius:5,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden" }}>
-                        <img src={s.logo} alt={s.label} style={{ width:15,height:15,objectFit:"contain" }} onError={e=>{e.target.parentElement.style.display="none";if(e.target.parentElement.nextSibling)e.target.parentElement.nextSibling.style.display="inline";}} />
+                    ? <span style={{ width:22,height:22,borderRadius:6,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden",border:`1.5px solid ${active?"#63b3ed":s.accent||"#2a3040"}`,boxShadow:active?"0 0 0 1px rgba(99,179,237,0.3)":"none" }}>
+                        <img src={s.logo} alt={s.label} style={{ width:16,height:16,objectFit:"contain" }} onError={e=>{e.target.parentElement.style.display="none";if(e.target.parentElement.nextSibling)e.target.parentElement.nextSibling.style.display="inline";}} />
                       </span>
                     : <span>{s.emoji}</span>}
                   {s.logo&&<span style={{ display:"none" }}>{s.emoji}</span>}
@@ -1019,7 +1019,7 @@ export default function SportZone() {
 
       {/* Hero */}
       <div className="hero-section" style={{ padding:"22px 20px 14px",maxWidth:1100,margin:"0 auto",animation:"heroFade 0.5s ease both" }}>
-        <h1 className="hero-headline" style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(34px,6vw,78px)",letterSpacing:"3px",color:"#f0f0f0",lineHeight:0.93,marginBottom:10 }}>
+        <h1 className="hero-headline" style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(30px,6vw,78px)",letterSpacing:"3px",color:"#f0f0f0",lineHeight:0.95,marginBottom:10 }}>
           Never Miss<br />
           <span style={{ background:"linear-gradient(90deg,#63b3ed,#a78bfa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>The Game</span>
         </h1>
