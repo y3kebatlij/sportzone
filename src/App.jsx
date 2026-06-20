@@ -69,7 +69,7 @@ const GLOBAL_STYLES = `
 const ALL_SPORTS_ID = "all";
 
 const SPORTS = [
-  { id:"worldcup", label:"World Cup",        emoji:"🏆", sport:"soccer",     league:"fifa.world",     accent:"#326295", logo:"/worldcup-2026-logo.png", featured:true },
+  { id:"worldcup", label:"World Cup",        emoji:"🏆", sport:"soccer",     league:"fifa.world",     accent:"#326295", logo:"/sportzone/worldcup-2026-logo.png", featured:true },
   { id:"epl",      label:"Premier League",   emoji:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", sport:"soccer",     league:"eng.1",          accent:"#3D195B", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/23.png" },
   { id:"ucl",      label:"Champions League", emoji:"⭐", sport:"soccer",     league:"uefa.champions", accent:"#0E1E5B", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/2.png" },
   { id:"laliga",   label:"La Liga",          emoji:"🇪🇸", sport:"soccer",     league:"esp.1",          accent:"#EE8707", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/15.png" },
@@ -1017,7 +1017,7 @@ export default function SportZone() {
           <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#63b3ed,#a78bfa,#63b3ed)",backgroundSize:"200% 100%",animation:"shimmer 3s linear infinite" }} />
           <div style={{ display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1 }}>
             <span style={{ width:30,height:30,borderRadius:6,background:"#fff",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden" }}>
-              <img src="/worldcup-2026-logo.png" alt="World Cup 2026" style={{ width:22,height:22,objectFit:"contain" }} onError={e=>{e.target.outerHTML="🏆";}} />
+              <img src="/sportzone/worldcup-2026-logo.png" alt="World Cup 2026" style={{ width:22,height:22,objectFit:"contain" }} onError={e=>{e.target.outerHTML="🏆";}} />
             </span>
             <div style={{ minWidth:0,display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap" }}>
               <span style={{ fontSize:10,fontWeight:700,color:"#a78bfa",letterSpacing:"1.2px",textTransform:"uppercase",whiteSpace:"nowrap" }}>Happening Now</span>
