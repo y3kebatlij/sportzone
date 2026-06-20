@@ -834,6 +834,21 @@ export default function SportZone() {
   const openGame=(game,sport)=>{ setSelectedGame(game); setSelectedSport(sport||SPORTS.find(s=>s.id===activeSport)); };
   const handleAllSportsGameClick=(game,sport,switchTab)=>{ if(switchTab){setActiveSport(sport.id);setActiveDay("today");}else{openGame(game,sport);} };
 
+  // Always show the freshest version of the selected game — search live data first,
+  // then today's games, then the currently loaded sport's schedule, falling back to the snapshot.
+  const freshSelectedGame = (() => {
+    if (!selectedGame) return null;
+    const id = selectedGame.id;
+    const fromLive = liveGames.find(g=>g.id===id);
+    if (fromLive) return fromLive;
+    const fromToday = todayAllGames.find(g=>g.id===id);
+    if (fromToday) return fromToday;
+    const allLoaded = Object.values(allGames).flat();
+    const fromAll = allLoaded.find(g=>g.id===id);
+    if (fromAll) return fromAll;
+    return selectedGame;
+  })();
+
   const currentSport=SPORTS.find(s=>s.id===activeSport);
   const today=todayStr();
   const tomorrow=offsetStr(1);
@@ -1080,7 +1095,7 @@ export default function SportZone() {
 
       <Footer />
 
-      {selectedGame&&<GameDetail game={selectedGame} sport={selectedSport||currentSport||SPORTS[0]} onClose={()=>{ setSelectedGame(null); setSelectedSport(null); }} favorites={favorites} onToggleFav={toggleFavorite} reminders={reminders} onSetReminder={handleSetReminder} />}
+      {selectedGame&&<GameDetail game={freshSelectedGame} sport={selectedSport||currentSport||SPORTS[0]} onClose={()=>{ setSelectedGame(null); setSelectedSport(null); }} favorites={favorites} onToggleFav={toggleFavorite} reminders={reminders} onSetReminder={handleSetReminder} />}
     </>
   );
 }
