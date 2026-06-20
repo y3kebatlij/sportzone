@@ -202,6 +202,24 @@ function isLiveStatus(n) {
   const u=n.toUpperCase();
   return u.includes("PROGRESS")||u.includes("HALFTIME")||u.includes("OVERTIME")||u.includes("ACTIVE")||u.includes("LIVE");
 }
+// ESPN sends status in two places: the top-level event.status AND
+// event.competitions[0].status. They can occasionally diverge — the
+// competition-level one tends to reflect the true live state first.
+// We compare both and trust whichever one reports a more "advanced" state.
+function getGameStatus(game) {
+  const comp = game.competitions?.[0];
+  const topStatus = game.status;
+  const compStatus = comp?.status;
+  const rank = (s) => {
+    const name = s?.type?.name||"";
+    if (isLiveStatus(name)) return 3;
+    if (name==="STATUS_FINAL"||name==="STATUS_FULL_TIME") return 2;
+    return 1;
+  };
+  if (!compStatus) return topStatus;
+  if (!topStatus) return compStatus;
+  return rank(compStatus) >= rank(topStatus) ? compStatus : topStatus;
+}
 function getTeamId(competitor) {
   return competitor?.team?.id||competitor?.team?.abbreviation||competitor?.team?.displayName||"";
 }
@@ -327,7 +345,7 @@ function HeartButton({ teamId, teamName, favorites, onToggle, small }) {
 
 function BellButton({ game, sport, reminders, onSetReminder }) {
   const hasReminder = !!reminders[game.id];
-  const statusName = game.status?.type?.name||"";
+  const statusName = getGameStatus(game)?.type?.name||"";
   const statusInfo = STATUS_MAP[statusName]||{live:false,final:false};
   if (statusInfo.live||statusInfo.final) return null;
   const [open, setOpen] = useState(false);
@@ -360,9 +378,10 @@ function GameCard({ game, sport, onClick, favorites, onToggleFav, reminders, onS
   const comp=game.competitions?.[0];
   const home=comp?.competitors?.find(c=>c.homeAway==="home");
   const away=comp?.competitors?.find(c=>c.homeAway==="away");
-  const statusName=game.status?.type?.name||"";
-  const statusInfo=STATUS_MAP[statusName]||{label:game.status?.type?.shortDetail||"Scheduled",live:false,final:false};
-  const period=game.status?.type?.shortDetail||"";
+  const gameStatus=getGameStatus(game);
+  const statusName=gameStatus?.type?.name||"";
+  const statusInfo=STATUS_MAP[statusName]||{label:gameStatus?.type?.shortDetail||"Scheduled",live:false,final:false};
+  const period=gameStatus?.type?.shortDetail||"";
   const broadcasters=parseBroadcasters(comp?.broadcasts||[]);
   const isLive=statusInfo.live;
   const gameSport=game._sport||sport;
@@ -417,9 +436,10 @@ function GameDetail({ game, sport, onClose, favorites, onToggleFav, reminders, o
   const comp=game.competitions?.[0];
   const home=comp?.competitors?.find(c=>c.homeAway==="home");
   const away=comp?.competitors?.find(c=>c.homeAway==="away");
-  const statusName=game.status?.type?.name||"";
+  const gameStatus=getGameStatus(game);
+  const statusName=gameStatus?.type?.name||"";
   const statusInfo=STATUS_MAP[statusName]||{label:"Scheduled",live:false,final:false};
-  const period=game.status?.type?.shortDetail||"";
+  const period=gameStatus?.type?.shortDetail||"";
   const venue=comp?.venue;
   const note=comp?.notes?.[0]?.headline||"";
   const rawBC=parseBroadcasters(comp?.broadcasts||[]);
@@ -794,7 +814,7 @@ export default function SportZone() {
           // we currently know is live from the faster-refreshing liveGames feed.
           grouped[dates[i]] = evts.map(g => {
             const knownLive = liveGames.find(lg => lg.id===g.id);
-            const incomingName = g.status?.type?.name||"";
+            const incomingName = getGameStatus(g)?.type?.name||"";
             if (knownLive && !isLiveStatus(incomingName) && incomingName!=="STATUS_FINAL" && incomingName!=="STATUS_FULL_TIME") {
               return knownLive; // trust the fresher live data instead
             }
@@ -822,18 +842,20 @@ export default function SportZone() {
         const events=(await res.json()).events||[];
         const todayEvents=events.filter(g=>{
           const key=getDateKey(g.date);
-          const completed=g.status?.type?.completed===true;
-          const isFinal=g.status?.type?.name==="STATUS_FINAL"||g.status?.type?.name==="STATUS_FULL_TIME";
+          const gs=getGameStatus(g);
+          const completed=gs?.type?.completed===true;
+          const isFinal=gs?.type?.name==="STATUS_FINAL"||gs?.type?.name==="STATUS_FULL_TIME";
           if ((completed||isFinal)&&key!==todayKey) return false;
           return key===todayKey;
         });
         const live=todayEvents.filter(g=>{
-          const s=g.status?.type?.name||"";
-          const completed=g.status?.type?.completed===true;
+          const gs=getGameStatus(g);
+          const s=gs?.type?.name||"";
+          const completed=gs?.type?.completed===true;
           if (completed) return false;
           if (isLiveStatus(s)) return true;
-          const period=g.status?.period||0;
-          const clock=g.status?.displayClock||"";
+          const period=gs?.period||0;
+          const clock=gs?.displayClock||"";
           return period>0&&clock!==""&&clock!=="0:00"&&!completed;
         });
         return { live:live.map(g=>({...g,_sport:sport})), today:todayEvents.map(g=>({...g,_sport:sport})) };
@@ -903,7 +925,7 @@ export default function SportZone() {
     // live > final > scheduled — never let a stale "scheduled" snapshot
     // override a version we know is live or finished.
     const rank = (g) => {
-      const name = g.status?.type?.name||"";
+      const name = getGameStatus(g)?.type?.name||"";
       if (isLiveStatus(name)) return 3;
       if (name==="STATUS_FINAL"||name==="STATUS_FULL_TIME") return 2;
       return 1;
