@@ -153,14 +153,21 @@ const LEAGUE_FALLBACK = {
 };
 
 const STATUS_MAP = {
-  "STATUS_SCHEDULED":   { label:"Upcoming", live:false, final:false },
-  "STATUS_IN_PROGRESS": { label:"LIVE",     live:true,  final:false },
-  "STATUS_HALFTIME":    { label:"Halftime", live:true,  final:false },
-  "STATUS_END_PERIOD":  { label:"Break",    live:true,  final:false },
-  "STATUS_FINAL":       { label:"Final",    live:false, final:true  },
-  "STATUS_FULL_TIME":   { label:"Final",    live:false, final:true  },
-  "STATUS_POSTPONED":   { label:"Postponed",live:false, final:false },
-  "STATUS_CANCELED":    { label:"Canceled", live:false, final:false },
+  "STATUS_SCHEDULED":              { label:"Upcoming",   live:false, final:false },
+  "STATUS_IN_PROGRESS":            { label:"LIVE",       live:true,  final:false },
+  "STATUS_FIRST_HALF":             { label:"1st Half",   live:true,  final:false },
+  "STATUS_SECOND_HALF":            { label:"2nd Half",   live:true,  final:false },
+  "STATUS_HALFTIME":               { label:"Halftime",   live:true,  final:false },
+  "STATUS_END_PERIOD":             { label:"Break",      live:true,  final:false },
+  "STATUS_EXTRA_TIME_FIRST_HALF":  { label:"Extra Time", live:true,  final:false },
+  "STATUS_EXTRA_TIME_SECOND_HALF": { label:"Extra Time", live:true,  final:false },
+  "STATUS_PENALTY":                { label:"Penalties",  live:true,  final:false },
+  "STATUS_SHOOTOUT":               { label:"Shootout",   live:true,  final:false },
+  "STATUS_OVERTIME":               { label:"OT",         live:true,  final:false },
+  "STATUS_FINAL":                  { label:"Final",      live:false, final:true  },
+  "STATUS_FULL_TIME":              { label:"Final",      live:false, final:true  },
+  "STATUS_POSTPONED":              { label:"Postponed",  live:false, final:false },
+  "STATUS_CANCELED":               { label:"Canceled",   live:false, final:false },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -196,11 +203,15 @@ function formatDayHeader(dateStr) {
   if (gd.getTime()===tm.getTime()) return "Tomorrow";
   return d.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"});
 }
-function isLiveStatus(n) {
-  if (!n) return false;
-  if (n==="STATUS_IN_PROGRESS"||n==="STATUS_HALFTIME"||n==="STATUS_END_PERIOD") return true;
-  const u=n.toUpperCase();
-  return u.includes("PROGRESS")||u.includes("HALFTIME")||u.includes("OVERTIME")||u.includes("ACTIVE")||u.includes("LIVE");
+function isLiveStatus(name, state) {
+  // Primary signal: ESPN's own status.type.state field — "in" reliably means
+  // live for any sport or period (regulation, halves, overtime, shootout, etc).
+  if (state === "in") return true;
+  if (!name) return false;
+  if (name==="STATUS_IN_PROGRESS"||name==="STATUS_HALFTIME"||name==="STATUS_END_PERIOD") return true;
+  const u=name.toUpperCase();
+  return u.includes("PROGRESS")||u.includes("HALFTIME")||u.includes("HALF")||u.includes("OVERTIME")
+      ||u.includes("PENALTY")||u.includes("SHOOTOUT")||u.includes("ACTIVE")||u.includes("LIVE");
 }
 // ESPN sends status in two places: the top-level event.status AND
 // event.competitions[0].status. They can occasionally diverge — the
@@ -212,7 +223,8 @@ function getGameStatus(game) {
   const compStatus = comp?.status;
   const rank = (s) => {
     const name = s?.type?.name||"";
-    if (isLiveStatus(name)) return 3;
+    const state = s?.type?.state||"";
+    if (isLiveStatus(name, state)) return 3;
     if (name==="STATUS_FINAL"||name==="STATUS_FULL_TIME") return 2;
     return 1;
   };
@@ -814,8 +826,10 @@ export default function SportZone() {
           // we currently know is live from the faster-refreshing liveGames feed.
           grouped[dates[i]] = evts.map(g => {
             const knownLive = liveGames.find(lg => lg.id===g.id);
-            const incomingName = getGameStatus(g)?.type?.name||"";
-            if (knownLive && !isLiveStatus(incomingName) && incomingName!=="STATUS_FINAL" && incomingName!=="STATUS_FULL_TIME") {
+            const incomingStatus = getGameStatus(g);
+            const incomingName = incomingStatus?.type?.name||"";
+            const incomingState = incomingStatus?.type?.state||"";
+            if (knownLive && !isLiveStatus(incomingName, incomingState) && incomingName!=="STATUS_FINAL" && incomingName!=="STATUS_FULL_TIME") {
               return knownLive; // trust the fresher live data instead
             }
             return g;
@@ -851,9 +865,10 @@ export default function SportZone() {
         const live=todayEvents.filter(g=>{
           const gs=getGameStatus(g);
           const s=gs?.type?.name||"";
+          const st=gs?.type?.state||"";
           const completed=gs?.type?.completed===true;
           if (completed) return false;
-          if (isLiveStatus(s)) return true;
+          if (isLiveStatus(s, st)) return true;
           const period=gs?.period||0;
           const clock=gs?.displayClock||"";
           return period>0&&clock!==""&&clock!=="0:00"&&!completed;
@@ -909,8 +924,10 @@ export default function SportZone() {
   // live > final > scheduled — a stale "scheduled" snapshot from one source never
   // overrides a version we already know is live or finished from another.
   const rankStatus = (g) => {
-    const name = getGameStatus(g)?.type?.name||"";
-    if (isLiveStatus(name)) return 3;
+    const gs = getGameStatus(g);
+    const name = gs?.type?.name||"";
+    const state = gs?.type?.state||"";
+    if (isLiveStatus(name, state)) return 3;
     if (name==="STATUS_FINAL"||name==="STATUS_FULL_TIME") return 2;
     return 1;
   };
