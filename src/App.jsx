@@ -46,6 +46,8 @@ const GLOBAL_STYLES = `
   .search-input:focus { border-color:#63b3ed; }
   .search-input::placeholder { color:#3a4255; }
   .offline-banner { background:#7c2d12; border-bottom:1px solid #92400e; padding:8px 20px; text-align:center; font-size:13px; font-weight:600; color:#fed7aa; }
+  .brand-logo { flex-shrink:0; }
+  .brand-name { flex-shrink:0; white-space:nowrap; }
   @media (max-width:640px) {
     .detail-overlay { align-items:flex-end; padding:0; }
     .detail-panel { border-radius:20px 20px 0 0; max-height:92vh; animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1) both; padding:20px 16px; }
@@ -57,6 +59,8 @@ const GLOBAL_STYLES = `
     .sport-btn { padding:6px 10px!important; flex-shrink:0; }
     .search-input { width:160px!important; font-size:13px; }
     .search-desktop-only { display:none!important; }
+    .brand-logo { width:32px!important; height:32px!important; font-size:16px!important; }
+    .brand-name { font-size:21px!important; letter-spacing:1.5px!important; }
   }
 `;
 
@@ -207,6 +211,22 @@ function getGameContext(game) {
   if (note) return note;
   if (season.includes("playoff")||season.includes("post")) return "Playoffs";
   return "";
+}
+
+// Extract goalscorers for soccer games from ESPN's competitor.details array
+function getGoalscorers(competitor) {
+  const details = competitor?.details||[];
+  return details
+    .filter(d => {
+      const type = (d.type?.text||d.type?.abbreviation||"").toLowerCase();
+      return type.includes("goal") && !type.includes("own") || type === "goal";
+    })
+    .map(d => ({
+      name: d.athletesInvolved?.[0]?.shortName || d.athletesInvolved?.[0]?.displayName || "Goal",
+      clock: d.clock?.displayValue || "",
+      ownGoal: (d.type?.text||"").toLowerCase().includes("own"),
+      penalty: (d.type?.text||"").toLowerCase().includes("penalty"),
+    }));
 }
 
 // ── Notification helpers ───────────────────────────────────────────────────────
@@ -397,6 +417,10 @@ function GameDetail({ game, sport, onClose, favorites, onToggleFav, reminders, o
   const context=getGameContext(game);
   const homeId=getTeamId(home);
   const awayId=getTeamId(away);
+  const isSoccer = sport.sport==="soccer";
+  const homeGoals = isSoccer ? getGoalscorers(home) : [];
+  const awayGoals = isSoccer ? getGoalscorers(away) : [];
+  const hasGoalData = isSoccer && (statusInfo.live||statusInfo.final) && (homeGoals.length>0||awayGoals.length>0);
 
   // Game summary for final games
   const leaders = comp?.leaders||[];
@@ -456,6 +480,34 @@ function GameDetail({ game, sport, onClose, favorites, onToggleFav, reminders, o
             {homeId&&<HeartButton teamId={homeId} teamName={home?.team?.shortDisplayName||""} favorites={favorites} onToggle={onToggleFav} />}
           </div>
         </div>
+
+        {/* Goalscorers — soccer only */}
+        {hasGoalData&&(
+          <div style={{ background:"#141820",borderRadius:12,padding:"14px 16px",display:"flex",justifyContent:"space-between",gap:16 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:10,fontWeight:700,letterSpacing:"1.2px",textTransform:"uppercase",color:"#5a6478",marginBottom:8 }}>⚽ {away?.team?.shortDisplayName||"Away"}</div>
+              <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+                {awayGoals.length===0&&<div style={{ fontSize:12,color:"#3a4255" }}>—</div>}
+                {awayGoals.map((g,i)=>(
+                  <div key={i} style={{ fontSize:12,color:"#d0d5dc" }}>
+                    {g.name} <span style={{ color:"#5a6478" }}>{g.clock}{g.penalty?" (P)":""}{g.ownGoal?" (OG)":""}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ flex:1,textAlign:"right" }}>
+              <div style={{ fontSize:10,fontWeight:700,letterSpacing:"1.2px",textTransform:"uppercase",color:"#5a6478",marginBottom:8 }}>{home?.team?.shortDisplayName||"Home"} ⚽</div>
+              <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+                {homeGoals.length===0&&<div style={{ fontSize:12,color:"#3a4255" }}>—</div>}
+                {homeGoals.map((g,i)=>(
+                  <div key={i} style={{ fontSize:12,color:"#d0d5dc" }}>
+                    <span style={{ color:"#5a6478" }}>{g.clock}{g.penalty?" (P)":""}{g.ownGoal?" (OG)":""}</span> {g.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Venue */}
         {venue?.fullName&&<div style={{ fontSize:12,color:"#5a6478",textAlign:"center" }}>📍 {venue.fullName}{venue.address?.city?`, ${venue.address.city}`:""}</div>}
@@ -832,8 +884,8 @@ export default function SportZone() {
           <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0 8px" }}>
 
             <div style={{ display:"flex",alignItems:"center",gap:8,cursor:"pointer" }} onClick={()=>setActiveSport(ALL_SPORTS_ID)}>
-              <div style={{ width:34,height:34,borderRadius:9,background:"linear-gradient(135deg,#63b3ed,#3182ce)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0 }}>⚡</div>
-              <span style={{ fontSize:24,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"2px",color:"#f0f0f0" }}>SportZone</span>
+              <div className="brand-logo" style={{ width:34,height:34,borderRadius:9,background:"linear-gradient(135deg,#63b3ed,#3182ce)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0 }}>⚡</div>
+              <span className="brand-name" style={{ fontSize:24,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"2px",color:"#f0f0f0" }}>SportZone</span>
             </div>
 
             <div style={{ display:"flex",alignItems:"center",gap:8 }}>
@@ -874,9 +926,11 @@ export default function SportZone() {
               const hasLiveNow=liveGames.some(g=>g._sport?.id===s.id);
               return (
                 <button key={s.id} className="sport-btn" onClick={()=>{ setActiveSport(s.id); setActiveDay("today"); setSearchQuery(""); }}
-                  style={{ background:active?"rgba(99,179,237,0.1)":"none",border:"none",padding:"6px 12px",borderRadius:"8px 8px 0 0",fontSize:13,fontWeight:active?700:500,color:active?"#63b3ed":"#5a6478",whiteSpace:"nowrap",borderBottom:active?"2px solid #63b3ed":"2px solid transparent",fontFamily:"'DM Sans',sans-serif",position:"relative",flexShrink:0,display:"flex",alignItems:"center",gap:6 }}>
+                  style={{ background:active?"rgba(99,179,237,0.1)":"none",border:"none",padding:"6px 12px",borderRadius:"8px 8px 0 0",fontSize:13,fontWeight:active?700:500,color:active?"#63b3ed":"#5a6478",whiteSpace:"nowrap",borderBottom:active?"2px solid #63b3ed":"2px solid transparent",fontFamily:"'DM Sans',sans-serif",position:"relative",flexShrink:0,display:"flex",alignItems:"center",gap:7 }}>
                   {s.logo
-                    ? <img src={s.logo} alt={s.label} style={{ width:18,height:18,objectFit:"contain",flexShrink:0 }} onError={e=>{e.target.style.display="none";if(e.target.nextSibling)e.target.nextSibling.style.display="inline";}} />
+                    ? <span style={{ width:20,height:20,borderRadius:5,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden" }}>
+                        <img src={s.logo} alt={s.label} style={{ width:15,height:15,objectFit:"contain" }} onError={e=>{e.target.parentElement.style.display="none";if(e.target.parentElement.nextSibling)e.target.parentElement.nextSibling.style.display="inline";}} />
+                      </span>
                     : <span>{s.emoji}</span>}
                   {s.logo&&<span style={{ display:"none" }}>{s.emoji}</span>}
                   <span className="sport-btn-label">{s.label}</span>
