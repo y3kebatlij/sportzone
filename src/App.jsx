@@ -788,7 +788,20 @@ export default function SportZone() {
       const dates=[0,1,2,3,4,5,6].map(i=>offsetStr(i));
       const results=await Promise.all(dates.map(d=>fetchDay(sport,d)));
       const grouped={};
-      results.forEach((evts,i)=>{ if(evts.length>0) grouped[dates[i]]=evts; });
+      results.forEach((evts,i)=>{
+        if (evts.length>0) {
+          // Guard: never let a stale "scheduled" snapshot overwrite a game
+          // we currently know is live from the faster-refreshing liveGames feed.
+          grouped[dates[i]] = evts.map(g => {
+            const knownLive = liveGames.find(lg => lg.id===g.id);
+            const incomingName = g.status?.type?.name||"";
+            if (knownLive && !isLiveStatus(incomingName) && incomingName!=="STATUS_FINAL" && incomingName!=="STATUS_FULL_TIME") {
+              return knownLive; // trust the fresher live data instead
+            }
+            return g;
+          });
+        }
+      });
       setAllGames(grouped);
       setLastUpdated(new Date());
       setTsKey(k=>k+1);
@@ -797,7 +810,7 @@ export default function SportZone() {
     }
     if (!silent) setLoading(false);
     else setRefreshing(false);
-  },[fetchDay]);
+  },[fetchDay, liveGames]);
 
   const fetchLiveAll = useCallback(async (isFirst=false) => {
     if (isFirst) setLoadingLive(true);
@@ -875,14 +888,27 @@ export default function SportZone() {
   const freshSelectedGame = (() => {
     if (!selectedGame) return null;
     const id = selectedGame.id;
-    const fromLive = liveGames.find(g=>g.id===id);
-    if (fromLive) return fromLive;
-    const fromToday = todayAllGames.find(g=>g.id===id);
-    if (fromToday) return fromToday;
-    const allLoaded = Object.values(allGames).flat();
-    const fromAll = allLoaded.find(g=>g.id===id);
-    if (fromAll) return fromAll;
-    return selectedGame;
+
+    // Gather every version of this game we currently have, from all sources
+    const candidates = [
+      liveGames.find(g=>g.id===id),
+      todayAllGames.find(g=>g.id===id),
+      ...Object.values(allGames).flat().filter(g=>g.id===id),
+      selectedGame,
+    ].filter(Boolean);
+
+    if (candidates.length === 0) return selectedGame;
+
+    // Prefer whichever candidate reports the most "advanced" state:
+    // live > final > scheduled — never let a stale "scheduled" snapshot
+    // override a version we know is live or finished.
+    const rank = (g) => {
+      const name = g.status?.type?.name||"";
+      if (isLiveStatus(name)) return 3;
+      if (name==="STATUS_FINAL"||name==="STATUS_FULL_TIME") return 2;
+      return 1;
+    };
+    return candidates.reduce((best, g) => rank(g) >= rank(best) ? g : best, candidates[0]);
   })();
 
   const currentSport=SPORTS.find(s=>s.id===activeSport);
