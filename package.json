@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://eyuel1424.github.io/sportzone",
+  "homepage": "https://y3kebatlij.github.io/sportzone",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

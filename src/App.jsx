@@ -55,21 +55,22 @@ const GLOBAL_STYLES = `
     .header-date   { display:none!important; }
     .sport-btn-label { display:none; }
     .sport-btn { padding:6px 10px!important; flex-shrink:0; }
-    .search-input { width:140px!important; }
+    .search-input { width:160px!important; font-size:13px; }
+    .search-desktop-only { display:none!important; }
   }
 `;
 
 const ALL_SPORTS_ID = "all";
 
 const SPORTS = [
-  { id:"nfl",      label:"NFL",              emoji:"🏈", sport:"football",   league:"nfl",            accent:"#4A90D9" },
-  { id:"nba",      label:"NBA",              emoji:"🏀", sport:"basketball", league:"nba",            accent:"#C9082A" },
-  { id:"mls",      label:"MLS",              emoji:"⚽", sport:"soccer",     league:"usa.1",          accent:"#1A9E6E" },
-  { id:"epl",      label:"Premier League",   emoji:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", sport:"soccer",     league:"eng.1",          accent:"#7B2FBE" },
-  { id:"seriea",   label:"Serie A",          emoji:"🇮🇹", sport:"soccer",     league:"ita.1",          accent:"#1A56A0" },
-  { id:"laliga",   label:"La Liga",          emoji:"🇪🇸", sport:"soccer",     league:"esp.1",          accent:"#EE8707" },
-  { id:"ucl",      label:"Champions League", emoji:"⭐", sport:"soccer",     league:"uefa.champions", accent:"#4A90D9" },
-  { id:"worldcup", label:"World Cup",        emoji:"🏆", sport:"soccer",     league:"fifa.world",     accent:"#326295" },
+  { id:"worldcup", label:"World Cup",        emoji:"🏆", sport:"soccer",     league:"fifa.world",     accent:"#326295", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/600.png", featured:true },
+  { id:"epl",      label:"Premier League",   emoji:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", sport:"soccer",     league:"eng.1",          accent:"#3D195B", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/23.png" },
+  { id:"ucl",      label:"Champions League", emoji:"⭐", sport:"soccer",     league:"uefa.champions", accent:"#0E1E5B", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/2.png" },
+  { id:"laliga",   label:"La Liga",          emoji:"🇪🇸", sport:"soccer",     league:"esp.1",          accent:"#EE8707", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/15.png" },
+  { id:"seriea",   label:"Serie A",          emoji:"🇮🇹", sport:"soccer",     league:"ita.1",          accent:"#024494", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/12.png" },
+  { id:"nfl",      label:"NFL",              emoji:"🏈", sport:"football",   league:"nfl",            accent:"#013369", logo:"https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png" },
+  { id:"nba",      label:"NBA",              emoji:"🏀", sport:"basketball", league:"nba",            accent:"#C9082A", logo:"https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" },
+  { id:"mls",      label:"MLS",              emoji:"⚽", sport:"soccer",     league:"usa.1",          accent:"#1A9E6E", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/19.png" },
 ];
 
 const STREAMING_ALTS = {
@@ -260,12 +261,15 @@ function TeamBlock({ competitor, showScore, reverse }) {
         : <div style={{ width:36,height:36,borderRadius:"50%",background:"#1e2535",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#8898aa",flexShrink:0 }}>{(team.abbreviation||"?").slice(0,3)}</div>
       }
       <div style={{ minWidth:0,textAlign:reverse?"right":"left" }}>
-        <div style={{ fontSize:14,fontWeight:winner?700:400,color:winner?"#f0f0f0":"#8898aa",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
-          {team.shortDisplayName||team.displayName||"TBD"}
+        <div style={{ fontSize:13,fontWeight:winner?700:400,color:winner?"#f0f0f0":"#8898aa",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+          {team.abbreviation&&team.shortDisplayName&&team.shortDisplayName.length>10?team.abbreviation:(team.shortDisplayName||team.displayName||"TBD")}
         </div>
-        {showScore&&competitor?.score!==undefined&&
-          <div style={{ fontSize:22,fontWeight:800,color:winner?"#f0f0f0":"#555e70",lineHeight:1.1,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"1px" }}>{competitor.score}</div>
-        }
+        {showScore&&(
+          <div style={{ fontSize:22,fontWeight:800,lineHeight:1.1,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"1px",
+            color:competitor?.score!==undefined?(winner?"#f0f0f0":"#555e70"):"#3a4255" }}>
+            {competitor?.score!==undefined?competitor.score:"–"}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -343,18 +347,15 @@ function GameCard({ game, sport, onClick, favorites, onToggleFav, reminders, onS
       {isLive&&<div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#ff3b3b,#ff6b6b,#ff3b3b)",backgroundSize:"200% 100%",animation:"shimmer 2s linear infinite" }} />}
       {isFavGame&&!isLive&&<div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#63b3ed44,#63b3ed,#63b3ed44)" }} />}
 
-      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-        <div style={{ display:"flex",alignItems:"center",gap:6,minWidth:0 }}>
+      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start" }}>
+        <div style={{ display:"flex",flexDirection:"column",gap:3,minWidth:0,flex:1 }}>
           {game._sport&&<span style={{ fontSize:10,fontWeight:700,color:gameSport.accent||"#63b3ed",textTransform:"uppercase",letterSpacing:"0.8px",whiteSpace:"nowrap" }}>{gameSport.emoji} {gameSport.label}</span>}
-          {!game._sport&&<span style={{ fontSize:11,color:"#5a6478" }}>{isLive?period:formatTime(game.date)}</span>}
-          {context&&<span style={{ fontSize:10,background:"#1e2535",color:"#8898aa",padding:"1px 6px",borderRadius:4,whiteSpace:"nowrap" }}>{context}</span>}
+          <span style={{ fontSize:11,color:"#5a6478",whiteSpace:"nowrap" }}>{isLive?period:formatTime(game.date)}</span>
+          {context&&<span style={{ fontSize:10,background:"#1e2535",color:"#8898aa",padding:"1px 6px",borderRadius:4,display:"inline-block",maxWidth:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{context}</span>}
         </div>
-        <div style={{ display:"flex",alignItems:"center",gap:4,flexShrink:0 }}>
-          {game._sport&&<span style={{ fontSize:10,color:"#5a6478",whiteSpace:"nowrap" }}>{isLive?period:formatTime(game.date)}</span>}
-          <span style={{ display:"flex",alignItems:"center",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,background:isLive?"rgba(255,59,59,0.15)":statusInfo.final?"#1a1f2e":"#141820",color:isLive?"#ff6b6b":statusInfo.final?"#5a6478":"#63b3ed",letterSpacing:"0.5px",textTransform:"uppercase",whiteSpace:"nowrap" }}>
-            {isLive&&<LiveDot />}{statusInfo.label}
-          </span>
-        </div>
+        <span style={{ display:"flex",alignItems:"center",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,background:isLive?"rgba(255,59,59,0.15)":statusInfo.final?"#1a1f2e":"#141820",color:isLive?"#ff6b6b":statusInfo.final?"#5a6478":"#63b3ed",letterSpacing:"0.5px",textTransform:"uppercase",whiteSpace:"nowrap",flexShrink:0,marginLeft:6 }}>
+          {isLive&&<LiveDot />}{statusInfo.label}
+        </span>
       </div>
 
       <div style={{ display:"flex",alignItems:"center",gap:8 }}>
@@ -437,9 +438,9 @@ function GameDetail({ game, sport, onClose, favorites, onToggleFav, reminders, o
           <div style={{ textAlign:"center",flexShrink:0 }}>
             {(statusInfo.live||statusInfo.final)
               ? <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-                  <span style={{ fontSize:40,fontWeight:800,color:"#f0f0f0",fontFamily:"'Bebas Neue',sans-serif" }}>{away?.score??0}</span>
+                  <span style={{ fontSize:40,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",color:away?.score!==undefined?"#f0f0f0":"#3a4255" }}>{away?.score??"–"}</span>
                   <span style={{ fontSize:14,color:"#2a3040" }}>-</span>
-                  <span style={{ fontSize:40,fontWeight:800,color:"#f0f0f0",fontFamily:"'Bebas Neue',sans-serif" }}>{home?.score??0}</span>
+                  <span style={{ fontSize:40,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",color:home?.score!==undefined?"#f0f0f0":"#3a4255" }}>{home?.score??"–"}</span>
                 </div>
               : <div style={{ fontSize:13,color:"#8898aa",fontWeight:600 }}>{formatTime(game.date)}</div>
             }
@@ -836,18 +837,21 @@ export default function SportZone() {
             </div>
 
             <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-              {/* Search */}
-              {searchOpen
-                ? <input ref={searchRef} className="search-input" placeholder="Search teams..." value={searchQuery}
+              {/* Search - icon always visible, input expands on tap */}
+              <div style={{ display:"flex",alignItems:"center",gap:6 }}>
+                {searchOpen&&(
+                  <input ref={searchRef} className="search-input" placeholder="Search teams..." value={searchQuery}
                     onChange={e=>setSearchQuery(e.target.value)}
                     onBlur={()=>{ if(!searchQuery) setSearchOpen(false); }}
                     style={{ width:200 }} />
-                : <button className="icon-btn" onClick={()=>setSearchOpen(true)} title="Search">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                    </svg>
-                  </button>
-              }
+                )}
+                <button className="icon-btn" onClick={()=>{ setSearchOpen(o=>!o); if(searchOpen&&searchQuery){ setSearchQuery(""); setSearchOpen(false); } }} title="Search"
+                  style={{ background:searchOpen?"rgba(99,179,237,0.1)":"#141820", borderColor:searchOpen?"#63b3ed":"#1e2535" }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={searchOpen?"#63b3ed":"currentColor"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  </svg>
+                </button>
+              </div>
               {lastUpdated&&<span key={tsKey} style={{ fontSize:11,color:"#3a4255" }} className="timestamp-flash header-date">Updated {lastUpdated.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</span>}
               <button className="icon-btn refresh-btn" onClick={handleRefresh} title="Refresh">
                 <svg className={refreshing?"spinning":""} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -870,12 +874,45 @@ export default function SportZone() {
               const hasLiveNow=liveGames.some(g=>g._sport?.id===s.id);
               return (
                 <button key={s.id} className="sport-btn" onClick={()=>{ setActiveSport(s.id); setActiveDay("today"); setSearchQuery(""); }}
-                  style={{ background:active?"rgba(99,179,237,0.1)":"none",border:"none",padding:"7px 12px",borderRadius:"8px 8px 0 0",fontSize:13,fontWeight:active?700:500,color:active?"#63b3ed":"#5a6478",whiteSpace:"nowrap",borderBottom:active?"2px solid #63b3ed":"2px solid transparent",fontFamily:"'DM Sans',sans-serif",position:"relative",flexShrink:0 }}>
-                  <span>{s.emoji}</span><span className="sport-btn-label"> {s.label}</span>
-                  {hasLiveNow&&!active&&<span style={{ position:"absolute",top:5,right:3,width:6,height:6,borderRadius:"50%",background:"#ff3b3b",animation:"pulse 1.2s ease-in-out infinite" }} />}
+                  style={{ background:active?"rgba(99,179,237,0.1)":"none",border:"none",padding:"6px 12px",borderRadius:"8px 8px 0 0",fontSize:13,fontWeight:active?700:500,color:active?"#63b3ed":"#5a6478",whiteSpace:"nowrap",borderBottom:active?"2px solid #63b3ed":"2px solid transparent",fontFamily:"'DM Sans',sans-serif",position:"relative",flexShrink:0,display:"flex",alignItems:"center",gap:6 }}>
+                  {s.logo
+                    ? <img src={s.logo} alt={s.label} style={{ width:18,height:18,objectFit:"contain",flexShrink:0 }} onError={e=>{e.target.style.display="none";if(e.target.nextSibling)e.target.nextSibling.style.display="inline";}} />
+                    : <span>{s.emoji}</span>}
+                  {s.logo&&<span style={{ display:"none" }}>{s.emoji}</span>}
+                  <span className="sport-btn-label">{s.label}</span>
+                  {hasLiveNow&&!active&&<span style={{ position:"absolute",top:3,right:1,width:6,height:6,borderRadius:"50%",background:"#ff3b3b",animation:"pulse 1.2s ease-in-out infinite" }} />}
                 </button>
               );
             })}
+          </div>
+        </div>
+      </div>
+
+      {/* World Cup Banner */}
+      <div style={{ maxWidth:1100,margin:"0 auto",padding:"16px 20px 0" }}>
+        <div onClick={()=>{ setActiveSport("worldcup"); setActiveDay("today"); }}
+          style={{
+            background:"linear-gradient(120deg,#1a2f5c 0%,#0f1f42 50%,#2a1a4c 100%)",
+            border:"1px solid rgba(99,179,237,0.35)",
+            borderRadius:16, padding:"16px 20px",
+            display:"flex", alignItems:"center", justifyContent:"space-between",
+            gap:14, cursor:"pointer", position:"relative", overflow:"hidden",
+            animation:"heroFade 0.5s ease both",
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(99,179,237,0.6)";}}
+          onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(99,179,237,0.35)";}}>
+          <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#63b3ed,#a78bfa,#63b3ed)",backgroundSize:"200% 100%",animation:"shimmer 3s linear infinite" }} />
+          <div style={{ display:"flex",alignItems:"center",gap:14,minWidth:0 }}>
+            <span style={{ fontSize:32,flexShrink:0 }}>🏆</span>
+            <div style={{ minWidth:0 }}>
+              <div style={{ fontSize:11,fontWeight:700,color:"#a78bfa",letterSpacing:"1.5px",textTransform:"uppercase",marginBottom:2 }}>Happening Now</div>
+              <div style={{ fontSize:18,fontWeight:800,color:"#f0f0f0",fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"1px" }}>FIFA World Cup 2026</div>
+              <div style={{ fontSize:12,color:"#8898aa",marginTop:2 }}>The world's biggest tournament — every match, every channel</div>
+            </div>
+          </div>
+          <div style={{ display:"flex",alignItems:"center",gap:6,flexShrink:0,color:"#63b3ed",fontSize:13,fontWeight:700,whiteSpace:"nowrap" }}>
+            View Matches
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </div>
         </div>
       </div>
@@ -887,7 +924,7 @@ export default function SportZone() {
           <span style={{ background:"linear-gradient(90deg,#63b3ed,#a78bfa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>The Game</span>
         </h1>
         <p className="hero-tagline" style={{ fontSize:14,color:"#5a6478",maxWidth:420,lineHeight:1.6 }}>
-          Every live and upcoming game across NFL, NBA, Premier League and more — with exactly where to watch in the US.
+          Every live and upcoming game across the World Cup, Premier League, NFL and more — with exactly where to watch in the US.
         </p>
         {favorites.length>0&&<div style={{ fontSize:12,color:"#63b3ed",marginTop:8 }}>❤️ {favorites.length} team{favorites.length!==1?"s":""} favorited — their games appear first</div>}
       </div>
