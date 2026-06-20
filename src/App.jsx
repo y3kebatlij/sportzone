@@ -905,33 +905,29 @@ export default function SportZone() {
   const openGame=(game,sport)=>{ setSelectedGame(game); setSelectedSport(sport||SPORTS.find(s=>s.id===activeSport)); };
   const handleAllSportsGameClick=(game,sport,switchTab)=>{ if(switchTab){setActiveSport(sport.id);setActiveDay("today");}else{openGame(game,sport);} };
 
-  // Always show the freshest version of the selected game — search live data first,
-  // then today's games, then the currently loaded sport's schedule, falling back to the snapshot.
-  const freshSelectedGame = (() => {
-    if (!selectedGame) return null;
-    const id = selectedGame.id;
-
-    // Gather every version of this game we currently have, from all sources
+  // Always resolve to the freshest version of a game across every data source we have.
+  // live > final > scheduled — a stale "scheduled" snapshot from one source never
+  // overrides a version we already know is live or finished from another.
+  const rankStatus = (g) => {
+    const name = getGameStatus(g)?.type?.name||"";
+    if (isLiveStatus(name)) return 3;
+    if (name==="STATUS_FINAL"||name==="STATUS_FULL_TIME") return 2;
+    return 1;
+  };
+  const resolveGame = useCallback((game) => {
+    if (!game) return game;
+    const id = game.id;
     const candidates = [
       liveGames.find(g=>g.id===id),
       todayAllGames.find(g=>g.id===id),
       ...Object.values(allGames).flat().filter(g=>g.id===id),
-      selectedGame,
+      game,
     ].filter(Boolean);
+    if (candidates.length === 0) return game;
+    return candidates.reduce((best, g) => rankStatus(g) >= rankStatus(best) ? g : best, candidates[0]);
+  }, [liveGames, todayAllGames, allGames]);
 
-    if (candidates.length === 0) return selectedGame;
-
-    // Prefer whichever candidate reports the most "advanced" state:
-    // live > final > scheduled — never let a stale "scheduled" snapshot
-    // override a version we know is live or finished.
-    const rank = (g) => {
-      const name = getGameStatus(g)?.type?.name||"";
-      if (isLiveStatus(name)) return 3;
-      if (name==="STATUS_FINAL"||name==="STATUS_FULL_TIME") return 2;
-      return 1;
-    };
-    return candidates.reduce((best, g) => rank(g) >= rank(best) ? g : best, candidates[0]);
-  })();
+  const freshSelectedGame = selectedGame ? resolveGame(selectedGame) : null;
 
   const currentSport=SPORTS.find(s=>s.id===activeSport);
   const today=todayStr();
@@ -1146,7 +1142,7 @@ export default function SportZone() {
 
             {!loading&&!error&&activeDay!=="week"&&displayGames.length>0&&
               <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14 }}>
-                {displayGames.map(g=><GameCard key={g.id} game={g} sport={currentSport} onClick={()=>openGame(g,currentSport)} favorites={favorites} onToggleFav={toggleFavorite} reminders={reminders} onSetReminder={handleSetReminder} />)}
+                {displayGames.map(g=>{ const fresh=resolveGame(g); return <GameCard key={g.id} game={fresh} sport={currentSport} onClick={()=>openGame(fresh,currentSport)} favorites={favorites} onToggleFav={toggleFavorite} reminders={reminders} onSetReminder={handleSetReminder} />; })}
               </div>
             }
 
@@ -1166,7 +1162,7 @@ export default function SportZone() {
                             {formatDayHeader(games[0].date)}
                           </div>
                           <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14 }}>
-                            {filtered.map(g=><GameCard key={g.id} game={g} sport={currentSport} onClick={()=>openGame(g,currentSport)} favorites={favorites} onToggleFav={toggleFavorite} reminders={reminders} onSetReminder={handleSetReminder} />)}
+                            {filtered.map(g=>{ const fresh=resolveGame(g); return <GameCard key={g.id} game={fresh} sport={currentSport} onClick={()=>openGame(fresh,currentSport)} favorites={favorites} onToggleFav={toggleFavorite} reminders={reminders} onSetReminder={handleSetReminder} />; })}
                           </div>
                         </div>
                       );
