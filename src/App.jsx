@@ -577,54 +577,58 @@ function GameDetail({ game, sport, onClose, favorites, onToggleFav, reminders, o
           <div style={{ fontSize:11,color:"#3a4255",textAlign:"center",marginTop:-12 }}>All times in your local timezone</div>
         }
 
-        {/* Goalscorers — soccer only */}
+        {/* Goalscorers — soccer only, two-column matching score block */}
         {hasGoalData&&(
           <div style={{ background:"#141820",borderRadius:12,padding:"14px 16px" }}>
-            <div style={{ fontSize:10,fontWeight:700,letterSpacing:"1.5px",textTransform:"uppercase",color:"#5a6478",marginBottom:12 }}>
+            <div style={{ fontSize:10,fontWeight:700,letterSpacing:"1.5px",textTransform:"uppercase",color:"#5a6478",marginBottom:12,textAlign:"center" }}>
               ⚽ Goals
             </div>
-            {/* Away team goals */}
-            {awayGoals.length>0&&(
-              <div style={{ marginBottom:homeGoals.length>0?10:0 }}>
-                <div style={{ fontSize:10,fontWeight:600,color:away?.winner?"#f0f0f0":"#8898aa",marginBottom:5,display:"flex",alignItems:"center",gap:6 }}>
-                  {away?.team?.logo&&<img src={away.team.logo} alt="" style={{ width:14,height:14,objectFit:"contain" }} onError={e=>e.target.style.display="none"} />}
-                  {away?.team?.shortDisplayName||"Away"}
+            <div style={{ display:"flex",gap:12 }}>
+              {/* Away team — left column */}
+              <div style={{ flex:1,minWidth:0 }}>
+                <div style={{ fontSize:10,fontWeight:600,color:away?.winner?"#f0f0f0":"#8898aa",marginBottom:6,display:"flex",alignItems:"center",gap:5 }}>
+                  {away?.team?.logo&&<img src={away.team.logo} alt="" style={{ width:13,height:13,objectFit:"contain",flexShrink:0 }} onError={e=>e.target.style.display="none"} />}
+                  <span style={{ overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{away?.team?.shortDisplayName||"Away"}</span>
                 </div>
-                <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
-                  {awayGoals.map((g,i)=>(
-                    <div key={i} style={{ display:"flex",alignItems:"center",gap:8,fontSize:13 }}>
-                      <span style={{ fontSize:11,color:"#5a6478",minWidth:32,fontVariantNumeric:"tabular-nums" }}>{g.clock?`${g.clock}`:"–"}</span>
-                      <span style={{ color:"#f0f0f0",fontWeight:500 }}>{g.name}</span>
-                      {g.penalty&&<span style={{ fontSize:10,background:"#1e2535",color:"#8898aa",padding:"1px 5px",borderRadius:4 }}>P</span>}
-                      {g.ownGoal&&<span style={{ fontSize:10,background:"#1e2535",color:"#ff6b6b",padding:"1px 5px",borderRadius:4 }}>OG</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {/* Divider if both teams scored */}
-            {awayGoals.length>0&&homeGoals.length>0&&
-              <div style={{ borderTop:"1px solid #1e2535",marginBottom:10 }} />
-            }
-            {/* Home team goals */}
-            {homeGoals.length>0&&(
-              <div>
-                <div style={{ fontSize:10,fontWeight:600,color:home?.winner?"#f0f0f0":"#8898aa",marginBottom:5,display:"flex",alignItems:"center",gap:6 }}>
-                  {home?.team?.logo&&<img src={home.team.logo} alt="" style={{ width:14,height:14,objectFit:"contain" }} onError={e=>e.target.style.display="none"} />}
-                  {home?.team?.shortDisplayName||"Home"}
-                </div>
-                <div style={{ display:"flex",flexDirection:"column",gap:4 }}>
-                  {homeGoals.map((g,i)=>(
-                    <div key={i} style={{ display:"flex",alignItems:"center",gap:8,fontSize:13 }}>
-                      <span style={{ fontSize:11,color:"#5a6478",minWidth:32,fontVariantNumeric:"tabular-nums" }}>{g.clock?`${g.clock}`:"–"}</span>
-                      <span style={{ color:"#f0f0f0",fontWeight:500 }}>{g.name}</span>
-                      {g.penalty&&<span style={{ fontSize:10,background:"#1e2535",color:"#8898aa",padding:"1px 5px",borderRadius:4 }}>P</span>}
-                      {g.ownGoal&&<span style={{ fontSize:10,background:"#1e2535",color:"#ff6b6b",padding:"1px 5px",borderRadius:4 }}>OG</span>}
-                    </div>
-                  ))}
+                <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+                  {awayGoals.length===0
+                    ? <div style={{ fontSize:11,color:"#3a4255" }}>—</div>
+                    : awayGoals.map((g,i)=>(
+                        <div key={i} style={{ display:"flex",alignItems:"baseline",gap:5 }}>
+                          <span style={{ fontSize:10,color:"#5a6478",flexShrink:0,minWidth:22 }}>{g.clock||"–"}</span>
+                          <span style={{ fontSize:12,color:"#f0f0f0",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{g.name}</span>
+                          {g.penalty&&<span style={{ fontSize:9,background:"#1e2535",color:"#8898aa",padding:"1px 4px",borderRadius:3,flexShrink:0 }}>P</span>}
+                          {g.ownGoal&&<span style={{ fontSize:9,background:"#1e2535",color:"#ff6b6b",padding:"1px 4px",borderRadius:3,flexShrink:0 }}>OG</span>}
+                        </div>
+                      ))
+                  }
                 </div>
               </div>
-            )}
+
+              {/* Divider */}
+              <div style={{ width:1,background:"#1e2535",flexShrink:0 }} />
+
+              {/* Home team — right column */}
+              <div style={{ flex:1,minWidth:0,textAlign:"right" }}>
+                <div style={{ fontSize:10,fontWeight:600,color:home?.winner?"#f0f0f0":"#8898aa",marginBottom:6,display:"flex",alignItems:"center",justifyContent:"flex-end",gap:5 }}>
+                  <span style={{ overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{home?.team?.shortDisplayName||"Home"}</span>
+                  {home?.team?.logo&&<img src={home.team.logo} alt="" style={{ width:13,height:13,objectFit:"contain",flexShrink:0 }} onError={e=>e.target.style.display="none"} />}
+                </div>
+                <div style={{ display:"flex",flexDirection:"column",gap:5,alignItems:"flex-end" }}>
+                  {homeGoals.length===0
+                    ? <div style={{ fontSize:11,color:"#3a4255" }}>—</div>
+                    : homeGoals.map((g,i)=>(
+                        <div key={i} style={{ display:"flex",alignItems:"baseline",gap:5,justifyContent:"flex-end" }}>
+                          {g.ownGoal&&<span style={{ fontSize:9,background:"#1e2535",color:"#ff6b6b",padding:"1px 4px",borderRadius:3,flexShrink:0 }}>OG</span>}
+                          {g.penalty&&<span style={{ fontSize:9,background:"#1e2535",color:"#8898aa",padding:"1px 4px",borderRadius:3,flexShrink:0 }}>P</span>}
+                          <span style={{ fontSize:12,color:"#f0f0f0",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{g.name}</span>
+                          <span style={{ fontSize:10,color:"#5a6478",flexShrink:0,minWidth:22 }}>{g.clock||"–"}</span>
+                        </div>
+                      ))
+                  }
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
