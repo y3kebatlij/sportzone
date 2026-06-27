@@ -66,6 +66,17 @@ const GLOBAL_STYLES = `
   }
 `;
 
+// ── Changelog — update VERSION and CHANGES every time you deploy a new update ──
+const CHANGELOG = {
+  version: "1.4",
+  date: "June 2026",
+  title: "Live Score Update",
+  changes: [
+    { emoji:"⚽", text:"Goalscorers now shown for live and finished soccer matches" },
+    { emoji:"🔴", text:"Live scores now correctly show during the game" },
+  ],
+};
+
 const ALL_SPORTS_ID = "all";
 
 const SPORTS = [
@@ -773,6 +784,50 @@ function AllSportsView({ liveGames, todayAllGames, loading, onGameClick, favorit
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 
+// ── What's New Modal ──────────────────────────────────────────────────────────
+
+function WhatsNewModal({ onClose }) {
+  return (
+    <div onClick={onClose} style={{ position:"fixed",inset:0,zIndex:300,background:"rgba(4,6,11,0.88)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn 0.2s ease" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#0f1420",border:"1px solid #1e2535",borderRadius:20,width:"100%",maxWidth:440,padding:"28px 24px",display:"flex",flexDirection:"column",gap:20,animation:"fadeUp 0.25s ease both",position:"relative",overflow:"hidden" }}>
+        {/* Top shimmer bar */}
+        <div style={{ position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#63b3ed,#a78bfa,#63b3ed)",backgroundSize:"200% 100%",animation:"shimmer 3s linear infinite" }} />
+
+        {/* Header */}
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start" }}>
+          <div>
+            <div style={{ fontSize:11,fontWeight:700,color:"#63b3ed",letterSpacing:"1.5px",textTransform:"uppercase",marginBottom:4 }}>
+              What's New — v{CHANGELOG.version}
+            </div>
+            <div style={{ fontSize:20,fontWeight:800,color:"#f0f0f0",fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"1px" }}>
+              {CHANGELOG.title}
+            </div>
+            <div style={{ fontSize:12,color:"#5a6478",marginTop:2 }}>{CHANGELOG.date}</div>
+          </div>
+          <button onClick={onClose} style={{ background:"#141820",border:"1px solid #1e2535",borderRadius:8,width:32,height:32,cursor:"pointer",color:"#8898aa",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>✕</button>
+        </div>
+
+        {/* Changes list */}
+        <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+          {CHANGELOG.changes.map((c,i)=>(
+            <div key={i} style={{ display:"flex",alignItems:"flex-start",gap:12,padding:"10px 12px",background:"#141820",borderRadius:10,border:"1px solid #1e2535" }}>
+              <span style={{ fontSize:18,flexShrink:0,lineHeight:1.4 }}>{c.emoji}</span>
+              <span style={{ fontSize:13,color:"#d0d5dc",lineHeight:1.5 }}>{c.text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Got it button */}
+        <button onClick={onClose} style={{ background:"linear-gradient(135deg,#3182ce,#5a67d8)",border:"none",borderRadius:10,padding:"12px",cursor:"pointer",color:"#fff",fontSize:14,fontWeight:700,fontFamily:"'DM Sans',sans-serif",letterSpacing:"0.3px",transition:"opacity 0.2s" }}
+          onMouseEnter={e=>e.currentTarget.style.opacity="0.88"}
+          onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+          Got it!
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Footer() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g," ");
   return (
@@ -807,6 +862,14 @@ export default function SportZone() {
   const [lastUpdated,   setLastUpdated]   = useState(null);
   const [tsKey,         setTsKey]         = useState(0);
   const [isOnline,      setIsOnline]      = useState(navigator.onLine);
+  const [showWhatsNew,  setShowWhatsNew]  = useState(()=>{
+    // Show popup if user hasn't seen this version yet
+    return localStorage.getItem("sz_changelog_seen") !== CHANGELOG.version;
+  });
+  const dismissWhatsNew = () => {
+    localStorage.setItem("sz_changelog_seen", CHANGELOG.version);
+    setShowWhatsNew(false);
+  };
   const [favorites,     setFavorites]     = useState(loadFavorites);
   const [reminders,     setReminders]     = useState(loadReminders);
   const [searchOpen,    setSearchOpen]    = useState(false);
@@ -1069,6 +1132,14 @@ export default function SportZone() {
                 </button>
               </div>
               {lastUpdated&&<span key={tsKey} style={{ fontSize:11,color:"#3a4255" }} className="timestamp-flash header-date">Updated {lastUpdated.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</span>}
+              {/* What's New button */}
+              <button className="icon-btn" onClick={()=>setShowWhatsNew(true)} title="What's New" style={{ position:"relative" }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>
+                </svg>
+                {/* Notification dot — shows until user reads the changelog */}
+                {showWhatsNew&&<span style={{ position:"absolute",top:3,right:3,width:7,height:7,borderRadius:"50%",background:"#63b3ed",border:"2px solid #080b12" }} />}
+              </button>
               <button className="icon-btn refresh-btn" onClick={handleRefresh} title="Refresh">
                 <svg className={refreshing?"spinning":""} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
@@ -1238,6 +1309,7 @@ export default function SportZone() {
       <Footer />
 
       {selectedGame&&<GameDetail game={freshSelectedGame} sport={selectedSport||currentSport||SPORTS[0]} onClose={()=>{ setSelectedGame(null); setSelectedSport(null); }} favorites={favorites} onToggleFav={toggleFavorite} reminders={reminders} onSetReminder={handleSetReminder} />}
+      {showWhatsNew&&<WhatsNewModal onClose={dismissWhatsNew} />}
     </>
   );
 }
