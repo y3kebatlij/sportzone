@@ -62,25 +62,22 @@ const GLOBAL_STYLES = `
     .search-desktop-only { display:none!important; }
     .brand-logo { width:32px!important; height:32px!important; font-size:16px!important; }
     .brand-name { font-size:21px!important; letter-spacing:1.5px!important; }
-    .wc-banner-title { font-size:13px!important; }
   }
 `;
 
 // ── Changelog — update VERSION and CHANGES every time you deploy a new update ──
 const CHANGELOG = {
-  version: "1.4",
-  date: "June 2026",
-  title: "Live Score Update",
+  version: "1.5",
+  date: "August 2026",
+  title: "World Cup Wrap-Up",
   changes: [
-    { emoji:"⚽", text:"Goalscorers now shown for live and finished soccer matches" },
-    { emoji:"🔴", text:"Live scores now correctly show during the game" },
+    { emoji:"🏆", text:"Removed World Cup 2026 coverage now that the tournament has ended" },
   ],
 };
 
 const ALL_SPORTS_ID = "all";
 
 const SPORTS = [
-  { id:"worldcup", label:"World Cup",        emoji:"🏆", sport:"soccer",     league:"fifa.world",     accent:"#326295", logo:"/sportzone/worldcup-2026-logo.png", featured:true },
   { id:"epl",      label:"Premier League",   emoji:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", sport:"soccer",     league:"eng.1",          accent:"#3D195B", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/23.png" },
   { id:"ucl",      label:"Champions League", emoji:"⭐", sport:"soccer",     league:"uefa.champions", accent:"#0E1E5B", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/2.png" },
   { id:"laliga",   label:"La Liga",          emoji:"🇪🇸", sport:"soccer",     league:"esp.1",          accent:"#EE8707", logo:"https://a.espncdn.com/i/leaguelogos/soccer/500/15.png" },
@@ -157,7 +154,6 @@ const LEAGUE_FALLBACK = {
   ucl:      [{ name:"Paramount+", note:"Champions League on Paramount+" }, { name:"CBS", note:"Select marquee matches on CBS" }],
   seriea:   [{ name:"Paramount+", note:"Serie A on Paramount+" }, { name:"CBS Sports Network", note:"Select on CBS Sports Network" }],
   laliga:   [{ name:"ESPN+", note:"La Liga exclusively on ESPN+" }],
-  worldcup: [{ name:"FOX", note:"World Cup on FOX (free over-the-air)" }, { name:"FS1", note:"Additional matches on FS1" }, { name:"Univision", note:"Spanish broadcast on Univision" }],
   mls:      [{ name:"Apple TV+", note:"MLS Season Pass on Apple TV+" }, { name:"ESPN+", note:"Select matches on ESPN+" }],
   nfl:      [{ name:"NFL Network", note:"Check NFL Network — also on Fubo & DirecTV" }],
   nba:      [{ name:"NBA TV", note:"Check NBA TV — also on Fubo & Sling" }],
@@ -1181,36 +1177,6 @@ export default function SportZone() {
         </div>
       </div>
 
-      {/* World Cup Banner */}
-      <div style={{ maxWidth:1100,margin:"0 auto",padding:"16px 20px 0" }}>
-        <div className="wc-banner" onClick={()=>{ setActiveSport("worldcup"); setActiveDay("today"); }}
-          style={{
-            background:"linear-gradient(120deg,#1a2f5c 0%,#0f1f42 50%,#2a1a4c 100%)",
-            border:"1px solid rgba(99,179,237,0.35)",
-            borderRadius:14, padding:"12px 16px",
-            display:"flex", alignItems:"center", justifyContent:"space-between",
-            gap:12, cursor:"pointer", position:"relative", overflow:"hidden",
-            animation:"heroFade 0.5s ease both",
-          }}
-          onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(99,179,237,0.6)";}}
-          onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(99,179,237,0.35)";}}>
-          <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#63b3ed,#a78bfa,#63b3ed)",backgroundSize:"200% 100%",animation:"shimmer 3s linear infinite" }} />
-          <div style={{ display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1 }}>
-            <span style={{ width:30,height:30,borderRadius:6,background:"#fff",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden" }}>
-              <img src="/sportzone/worldcup-2026-logo.png" alt="World Cup 2026" style={{ width:22,height:22,objectFit:"contain" }} onError={e=>{e.target.style.display="none";}} />
-            </span>
-            <div style={{ minWidth:0,display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap" }}>
-              <span style={{ fontSize:10,fontWeight:700,color:"#a78bfa",letterSpacing:"1.2px",textTransform:"uppercase",whiteSpace:"nowrap" }}>Happening Now</span>
-              <span className="wc-banner-title" style={{ fontSize:15,fontWeight:800,color:"#f0f0f0",fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.5px",whiteSpace:"nowrap" }}>FIFA World Cup 2026</span>
-            </div>
-          </div>
-          <div className="wc-banner-cta" style={{ display:"flex",alignItems:"center",gap:5,flexShrink:0,color:"#63b3ed",fontSize:12,fontWeight:700,whiteSpace:"nowrap" }}>
-            View Matches
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </div>
-        </div>
-      </div>
-
       {/* Hero */}
       <div className="hero-section" style={{ padding:"22px 20px 14px",maxWidth:1100,margin:"0 auto",animation:"heroFade 0.5s ease both" }}>
         <h1 className="hero-headline" style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(30px,6vw,78px)",letterSpacing:"3px",color:"#f0f0f0",lineHeight:0.95,marginBottom:10 }}>
@@ -1218,7 +1184,7 @@ export default function SportZone() {
           <span style={{ background:"linear-gradient(90deg,#63b3ed,#a78bfa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>The Game</span>
         </h1>
         <p className="hero-tagline" style={{ fontSize:14,color:"#5a6478",maxWidth:420,lineHeight:1.6 }}>
-          Every live and upcoming game across the World Cup, Premier League, NFL and more — with exactly where to watch in the US.
+          Every live and upcoming game across the Premier League, NFL and more — with exactly where to watch in the US.
         </p>
         {favorites.length>0&&<div style={{ fontSize:12,color:"#63b3ed",marginTop:8 }}>❤️ {favorites.length} team{favorites.length!==1?"s":""} favorited — their games appear first</div>}
       </div>
